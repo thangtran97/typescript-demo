@@ -1,6 +1,6 @@
 import axiosClient from "../utils/axios";
 import {
-    AddVideoResponse, DeleteVideoResponse,
+    CreateVideoResponse, DeleteVideoResponse,
     EditVideoResponse,
     GetListVideoResponse,
     GetVideoResponse,
@@ -16,11 +16,11 @@ export const getDetail = async (id: number) => {
 };
 
 export const create = async (video: VideoInfo) => {
-    return await axiosClient.post<AddVideoResponse>("/videos", video);
+    return await axiosClient.post<CreateVideoResponse>("/videos", video);
 };
 
-export const edit = async (id: number, video: VideoInfo) => {
-    return await axiosClient.put<EditVideoResponse>(`/videos/${id}`, video);
+export const edit = async (video: VideoInfo) => {
+    return await axiosClient.put<EditVideoResponse>(`/videos/${video.id}`, video);
 };
 
 export const remove = async (id: number) => {

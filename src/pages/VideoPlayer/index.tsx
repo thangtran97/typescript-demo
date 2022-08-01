@@ -2,13 +2,13 @@ import React, { useEffect, useRef } from "react";
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
 import "videojs-seek-buttons/dist/videojs-seek-buttons.css";
-import axiosClient from "../../utils/axios";
 import Page from "../../components/Page";
 import { useParams } from "react-router-dom";
 import videoJsContribQualityLevels from "videojs-contrib-quality-levels";
 import videojsHlsQualitySelector from "videojs-hls-quality-selector";
 import videosjsSeekButton from "videojs-seek-buttons";
-import { GetVideoResponse } from "../../types/VideoType";
+import { getDetailVideo } from "../../store/videoSlice";
+import { useAppDispatch } from "../../store/hooks";
 
 const initialOptions: videojs.PlayerOptions = {
     width: 1366,
@@ -40,6 +40,7 @@ const initialOptions: videojs.PlayerOptions = {
 
 const VideoPlayer: React.FC = () => {
     const { id } = useParams();
+    const dispatch = useAppDispatch();
     const videoRef = useRef<HTMLVideoElement>(null);
     const playerRef = useRef<videojs.Player>();
 
@@ -57,22 +58,21 @@ const VideoPlayer: React.FC = () => {
 
     useEffect(() => {
         registerPlugin();
-        axiosClient.get<GetVideoResponse>(`/videos/${id}`)
-            .then(res => {
+        dispatch(getDetailVideo(parseInt(id || "-1"))).then(resultAction => {
+            if (getDetailVideo.fulfilled.match(resultAction)) {
                 playerRef.current = videojs(videoRef.current || "", {
                     ...initialOptions,
                     sources: [
                         {
-                            src: res.data.data.url,
-                            type: res.data.data.type
+                            src: resultAction.payload.data.url,
+                            type: resultAction.payload.data.type
                         }
                     ]
                 });
-
-            });
+            }
+        })
 
         return () => {
-
             if (playerRef.current) {
                 playerRef.current.dispose();
             }

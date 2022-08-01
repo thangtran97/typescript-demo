@@ -1,22 +1,30 @@
 import React, { useState, useEffect } from "react";
 import "antd/dist/antd.css";
-import axiosClient from "../../utils/axios";
 import { useNavigate } from "react-router-dom";
 import Page from "../../components/Page";
-import { Button, Table } from "antd";
+import { Button, message, Modal, Table } from "antd";
 import VideoAddModal from "../../components/VideoAddModal";
-import { DeleteOutlined, EditOutlined, PlayCircleOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, ExclamationCircleOutlined, PlayCircleOutlined } from "@ant-design/icons";
 import VideoEditModal from "../../components/VideoEditModal";
-import { DeleteVideoResponse, GetListVideoResponse, VideoInfo } from "../../types/VideoType";
-import { useDispatch } from "react-redux";
+import {
+    deleteVideo,
+    getAllVideo, selectIsCreateVideoModalVisible, selectIsEditVideoModalVisible,
+    selectIsLoading,
+    selectVideoList, setCreateVideoModalVisible, setEditVideoModalVisible
+} from "../../store/videoSlice";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { VideoInfo } from "../../types/VideoType";
+
+const { confirm } = Modal;
 
 const Video: React.FC = () => {
-    const [videoList, setVideoList] = useState<VideoInfo[]>([]);
     const [videoId, setVideoId] = useState<number>(-1);
-    const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false);
-    const [isEditModalVisible, setIsEditModalVisible] = useState<boolean>(false);
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const isLoading = useAppSelector(selectIsLoading);
+    const isCreateModalVisible = useAppSelector(selectIsCreateVideoModalVisible);
+    const isEditModalVisible = useAppSelector(selectIsEditVideoModalVisible);
+    const videoList = useAppSelector(selectVideoList);
 
     const columns = [
         {
@@ -47,20 +55,20 @@ const Video: React.FC = () => {
                 return <div>
                     <Button
                         shape="circle"
-                        style={{color: "green", borderColor: "green"}}
-                        icon={<PlayCircleOutlined/>}
+                        style={{ color: "green", borderColor: "green" }}
+                        icon={<PlayCircleOutlined />}
                         onClick={event => play(record.id)}
                     />
                     <Button
                         shape="circle"
-                        style={{ marginLeft: 10, color: "blue", borderColor: "blue"}}
-                        icon={<EditOutlined/>}
+                        style={{ marginLeft: 10, color: "blue", borderColor: "blue" }}
+                        icon={<EditOutlined />}
                         onClick={event => showEditModal(record.id)}
                     />
                     <Button shape="circle"
                             icon={<DeleteOutlined />}
                             style={{ marginLeft: 10, color: "red", borderColor: "red" }}
-                            onClick={event => handleDelete(index)}
+                            onClick={event => showDeleteConfirm(index)}
                     />
                 </div>;
             }
@@ -68,66 +76,62 @@ const Video: React.FC = () => {
     ];
 
     const showAddModal = () => {
-        setIsAddModalVisible(true);
-    };
-
-    const handleCloseAdd = () => {
-        setIsAddModalVisible(false);
+        dispatch(setCreateVideoModalVisible(true));
     };
 
     const showEditModal = (id: number) => {
         setVideoId(id);
-        setIsEditModalVisible(true);
+        dispatch(setEditVideoModalVisible(true));
     };
 
     const play = (id: number) => {
-        setVideoId(id);
         navigate(`/videos/play/${id}`);
     };
 
-    const handleCloseEdit = () => {
-        setIsEditModalVisible(false);
-    };
-
-    const getAll = async () => {
-        await axiosClient.get<GetListVideoResponse>("/videos").then(res => {
-            setVideoList(res.data.data);
-        });
-    };
-
-    const handleDelete = async (id: number) => {
-        await axiosClient.delete<DeleteVideoResponse>(`videos/${id}`).then(res => {
-            let success = res.data.success;
-            if (success) {
-                getAll();
+    const showDeleteConfirm = (id: number) => {
+        confirm({
+            title: "Are you sure delete this video?",
+            icon: <ExclamationCircleOutlined />,
+            okText: "Yes",
+            okType: "danger",
+            cancelText: "No",
+            onOk() {
+                handleDelete(id);
             }
         });
     };
 
+
+    const handleDelete = async (id: number) => {
+        let resultAction = await dispatch(deleteVideo(id));
+        if (deleteVideo.fulfilled.match(resultAction)) {
+            message.success("Successful!");
+        } else if (deleteVideo.rejected.match(resultAction)) {
+            message.error("Failed!");
+        }
+    };
+
     useEffect(() => {
-        getAll();
-    }, []);
+        dispatch(getAllVideo());
+    }, [dispatch]);
 
     return (
         <Page content={
             <div>
-                <VideoAddModal
-                    isModalVisible={isAddModalVisible}
-                    handleClose={handleCloseAdd}
-                    getAll={getAll}
-                />
-                <VideoEditModal
-                    id={videoId}
-                    isModalVisible={isEditModalVisible}
-                    handleClose={handleCloseEdit}
-                    getAll={getAll}
-                />
-                <Button style={{ marginTop: 10 }} type="primary" onClick={showAddModal}>
+                <VideoAddModal />
+                <VideoEditModal id={videoId} />
+                <Button
+                    type="primary"
+                    style={{ float: "right", marginTop: 10, marginBottom: 30 }}
+                    onClick={showAddModal}
+                    disabled={isLoading && !isCreateModalVisible && !isEditModalVisible}
+                >
                     Add
                 </Button>
                 <Table
+                    loading={isLoading && !isCreateModalVisible && !isEditModalVisible}
                     style={{ marginTop: 50 }}
-                    dataSource={videoList.map((d, i) => ({ key: i, ...d }))}
+                    dataSource={videoList?.map((d, i) => ({ key: i, ...d }))}
                     columns={columns}
                 />
             </div>}

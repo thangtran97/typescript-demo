@@ -1,61 +1,115 @@
-import { Form, Input, Modal } from "antd";
-import React, { ChangeEvent, useState } from "react";
-import axiosClient from "../../utils/axios";
-import { AddVideoResponse, VideoInfo } from "../../types/VideoType";
+import { Form, Input, message, Modal } from "antd";
+import React, { ChangeEvent, useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import {
+    createVideo, selectIsCreateVideoModalVisible,
+    selectIsLoading, setCreateVideoModalVisible
+} from "../../store/videoSlice";
+import { VideoError, VideoFormState, VideoTouched } from "../../types/VideoType";
+import validate from "validate.js";
 
-interface PropTypes {
-    isModalVisible: boolean;
-    handleClose: Function;
-    getAll: Function;
-}
-
-const initVideo = {
-    id: -1,
-    label: "",
-    url: "",
-    type: ""
+const initFormState = {
+    isValid: false,
+    values: {
+        id: -1,
+        label: "",
+        url: "",
+        type: ""
+    },
+    touched: {},
+    errors: {}
 };
 
-const VideoAddModal: React.FC<PropTypes> = (props) => {
-    const [video, setVideo] = useState<VideoInfo>(initVideo);
+const constraints = {
+    label: {
+        presence: {
+            allowEmpty: false
+        }
+    },
+    url: {
+        presence: {
+            allowEmpty: false
+        }
+    },
+    type: {
+        presence: {
+            allowEmpty: false
+        }
+    }
+};
+
+const VideoAddModal: React.FC = (props) => {
+    const [formState, setFormState] = useState<VideoFormState>(initFormState);
+    const dispatch = useAppDispatch();
+    const isCreateModalVisible = useAppSelector(selectIsCreateVideoModalVisible);
+    const isLoading = useAppSelector(selectIsLoading);
     const [form] = Form.useForm();
 
-    const handleOk = () => {
-        axiosClient.post<AddVideoResponse>("/videos", video).then(res => {
-            let success = res.data.success;
-            if (success) {
-                props.getAll();
-                props.handleClose();
-            }
-        });
+    const handleOk = async () => {
+        let resultAction = await dispatch(createVideo(formState.values));
+        if (createVideo.fulfilled.match(resultAction)) {
+            form.resetFields();
+            setFormState(initFormState);
+            message.success("Successful!");
+            return;
+        }
+        if (createVideo.rejected.match(resultAction)) {
+            setFormState(prevState => ({
+                ...prevState,
+                isValid: !resultAction.payload?.errors,
+                errors: resultAction.payload?.errors || {}
+            }));
+            message.error("Failed!");
+            return;
+        }
     };
 
     const handleCancel = () => {
-        props.handleClose();
+        form.resetFields();
+        setFormState(initFormState);
+        dispatch(setCreateVideoModalVisible(false));
     };
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setVideo(prevState => ({
+        setFormState(prevState => ({
             ...prevState,
-            [e.target.name]: e.target.value
+            values: {
+                ...prevState.values,
+                [e.target.name]: e.target.value
+            },
+            touched: {
+                ...prevState.touched,
+                [e.target.name]: true
+            }
         }));
     };
+
+    const hasError = (field: keyof VideoTouched | keyof VideoError) => !!(formState.touched[field] && formState.errors[field]);
+
+    useEffect(() => {
+        let errors = validate(formState.values, constraints);
+        setFormState(prevState => ({
+            ...prevState,
+            isValid: !errors,
+            errors: errors || {}
+        }));
+
+    }, [formState.values]);
 
     return (
         <div>
             <Modal
-                title="Add new Video"
-                visible={props.isModalVisible}
+                title="Create new Video"
+                visible={isCreateModalVisible}
                 onCancel={() => {
-                    form.resetFields();
                     handleCancel();
                 }}
                 onOk={() => {
                     form.validateFields().then(values => {
-                        form.resetFields();
                         handleOk();
                     });
                 }}
+                okButtonProps={{ disabled: !formState.isValid, loading: isLoading }}
             >
                 <Form
                     form={form}
@@ -64,39 +118,42 @@ const VideoAddModal: React.FC<PropTypes> = (props) => {
                 >
                     <Form.Item
                         name="label"
-                        rules={[{ required: true, message: "Please input the Label!" }]}
+                        help={hasError("label") ? formState.errors.label : ""}
+                        validateStatus={hasError("label") ? "error" : "success"}
                     >
                         <Input
                             id="label"
                             name="label"
                             placeholder="Label"
-                            value={video.label}
+                            value={formState.values.label}
                             onChange={handleChange}
                         />
                     </Form.Item>
                     <Form.Item
                         name="url"
-                        rules={[{ required: true, message: "Please input the URL!" }]}
+                        help={hasError("url") ? formState.errors.url : ""}
+                        validateStatus={hasError("url") ? "error" : "success"}
                     >
                         <Input
                             id="url"
                             name="url"
                             placeholder="URL"
                             style={{ marginTop: 10 }}
-                            value={video.url}
+                            value={formState.values.url}
                             onChange={handleChange}
                         />
                     </Form.Item>
                     <Form.Item
                         name="type"
-                        rules={[{ required: true, message: "Please input the Type!" }]}
+                        help={hasError("type") ? formState.errors.type : ""}
+                        validateStatus={hasError("type") ? "error" : "success"}
                     >
                         <Input
                             id="type"
                             name="type"
                             placeholder="Type"
                             style={{ marginTop: 10 }}
-                            value={video.type}
+                            value={formState.values.type}
                             onChange={handleChange}
                         />
                     </Form.Item>
