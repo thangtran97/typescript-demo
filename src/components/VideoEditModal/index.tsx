@@ -2,11 +2,17 @@ import { Form, Input, message, Modal, Spin } from "antd";
 import React, { ChangeEvent, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
-    editVideo, getDetailVideo,
-    selectIsEditVideoModalVisible, selectIsLoading,
-    setEditVideoModalVisible
+    editVideo,
+    getDetailVideo,
+    selectIsEditVideoModalVisible,
+    selectIsLoading,
+    setEditVideoModalVisible,
 } from "../../store/videoSlice";
-import { VideoError, VideoFormState, VideoTouched } from "../../types/VideoType";
+import {
+    VideoError,
+    VideoFormState,
+    VideoTouched,
+} from "../../types/VideoType";
 import validate from "validate.js";
 
 interface PropTypes {
@@ -19,31 +25,31 @@ const initFormState = {
         id: -1,
         label: "",
         url: "",
-        type: ""
+        type: "",
     },
     touched: {},
-    errors: {}
+    errors: {},
 };
 
 const constraints = {
     label: {
         presence: {
-            allowEmpty: false
-        }
+            allowEmpty: false,
+        },
     },
     url: {
         presence: {
-            allowEmpty: false
-        }
+            allowEmpty: false,
+        },
     },
     type: {
         presence: {
-            allowEmpty: false
-        }
-    }
+            allowEmpty: false,
+        },
+    },
 };
 
-const VideoEditModal: React.FC<PropTypes> = (props) => {
+const VideoEditModal: React.FC<PropTypes> = props => {
     const [formState, setFormState] = useState<VideoFormState>(initFormState);
     const dispatch = useAppDispatch();
     const isEditModalVisible = useAppSelector(selectIsEditVideoModalVisible);
@@ -56,7 +62,7 @@ const VideoEditModal: React.FC<PropTypes> = (props) => {
             let values = resultAction.payload.data;
             setFormState(prevState => ({
                 ...prevState,
-                values
+                values,
             }));
             form.setFieldsValue(values);
         }
@@ -67,16 +73,16 @@ const VideoEditModal: React.FC<PropTypes> = (props) => {
         if (editVideo.fulfilled.match(resultAction)) {
             form.resetFields();
             setFormState(initFormState);
-            message.success("Successful!");
+            message.success("Success!");
             return;
         }
         if (editVideo.rejected.match(resultAction)) {
             setFormState(prevState => ({
                 ...prevState,
                 isValid: !resultAction.payload?.errors,
-                errors: resultAction.payload?.errors || {}
+                errors: resultAction.payload?.errors || {},
             }));
-            message.error("Failed!");
+            message.error("Error!");
             return;
         }
     };
@@ -92,30 +98,31 @@ const VideoEditModal: React.FC<PropTypes> = (props) => {
             ...prevState,
             values: {
                 ...prevState.values,
-                [e.target.name]: e.target.value
+                [e.target.name]: e.target.value,
             },
             touched: {
                 ...prevState.touched,
-                [e.target.name]: true
-            }
+                [e.target.name]: true,
+            },
         }));
     };
 
-    const hasError = (field: keyof VideoTouched | keyof VideoError) => !!(formState.touched[field] && formState.errors[field]);
+    const hasError = (field: keyof VideoTouched | keyof VideoError) =>
+        !!(formState.touched[field] && formState.errors[field]);
 
     useEffect(() => {
-        if (props.id != -1)
+        if (isEditModalVisible) {
             getDetail();
-    }, [props.id]);
+        }
+    }, [isEditModalVisible]);
 
     useEffect(() => {
         let errors = validate(formState.values, constraints);
         setFormState(prevState => ({
             ...prevState,
             isValid: !errors,
-            errors: errors || {}
+            errors: errors || {},
         }));
-
     }, [formState.values]);
 
     return (
@@ -131,18 +138,21 @@ const VideoEditModal: React.FC<PropTypes> = (props) => {
                         handleOk();
                     });
                 }}
-                okButtonProps={{ disabled: !formState.isValid, loading: isLoading }}
+                okButtonProps={{
+                    disabled: !formState.isValid,
+                    loading: isLoading,
+                }}
             >
                 <Spin spinning={isLoading}>
-                    <Form
-                        form={form}
-                        layout="vertical"
-                        name="addVideoForm"
-                    >
+                    <Form form={form} layout="vertical" name="addVideoForm">
                         <Form.Item
                             name="label"
-                            help={hasError("label") ? formState.errors.label : ""}
-                            validateStatus={hasError("label") ? "error" : "success"}
+                            help={
+                                hasError("label") ? formState.errors.label : ""
+                            }
+                            validateStatus={
+                                hasError("label") ? "error" : "success"
+                            }
                         >
                             <Input
                                 id="label"
@@ -155,7 +165,9 @@ const VideoEditModal: React.FC<PropTypes> = (props) => {
                         <Form.Item
                             name="url"
                             help={hasError("url") ? formState.errors.url : ""}
-                            validateStatus={hasError("url") ? "error" : "success"}
+                            validateStatus={
+                                hasError("url") ? "error" : "success"
+                            }
                         >
                             <Input
                                 id="url"
@@ -169,7 +181,9 @@ const VideoEditModal: React.FC<PropTypes> = (props) => {
                         <Form.Item
                             name="type"
                             help={hasError("type") ? formState.errors.type : ""}
-                            validateStatus={hasError("type") ? "error" : "success"}
+                            validateStatus={
+                                hasError("type") ? "error" : "success"
+                            }
                         >
                             <Input
                                 id="type"

@@ -1,10 +1,11 @@
 import axiosClient from "../utils/axios";
 import {
-    CreateVideoResponse, DeleteVideoResponse,
+    CreateVideoResponse,
+    DeleteVideoResponse,
     EditVideoResponse,
     GetListVideoResponse,
     GetVideoResponse,
-    VideoInfo
+    VideoInfo,
 } from "../types/VideoType";
 
 export const getAll = async () => {
@@ -20,7 +21,10 @@ export const create = async (video: VideoInfo) => {
 };
 
 export const edit = async (video: VideoInfo) => {
-    return await axiosClient.put<EditVideoResponse>(`/videos/${video.id}`, video);
+    return await axiosClient.put<EditVideoResponse>(
+        `/videos/${video.id}`,
+        video
+    );
 };
 
 export const remove = async (id: number) => {
@@ -32,7 +36,7 @@ const VideoService = {
     getDetail,
     create,
     edit,
-    remove
+    remove,
 };
 
 export default VideoService;

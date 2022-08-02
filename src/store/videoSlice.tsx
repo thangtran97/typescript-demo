@@ -1,12 +1,13 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import VideoService from "../services/VideoService";
 import {
-    CreateVideoResponse, DeleteVideoResponse,
+    CreateVideoResponse,
+    DeleteVideoResponse,
     EditVideoResponse,
     GetListVideoResponse,
     GetVideoResponse,
     VideoInfo,
-    VideoState
+    VideoState,
 } from "../types/VideoType";
 import { RootState } from "./index";
 
@@ -16,51 +17,51 @@ const initialState: VideoState = {
     isCreateModalVisible: false,
     isEditModalVisible: false,
     values: [],
-    errors: {}
+    errors: {},
 };
 
-export const getAllVideo = createAsyncThunk(
-    "videos/getAll",
-    async () => {
-        let response = await VideoService.getAll();
-        return response.data as GetListVideoResponse;
-    }
-);
+export const getAllVideo = createAsyncThunk("videos/getAll", async () => {
+    let response = await VideoService.getAll();
+    return response.data as GetListVideoResponse;
+});
 
 export const getDetailVideo = createAsyncThunk<GetVideoResponse, number>(
-    "videos/getDetail", async (id, thunkAPI) => {
+    "videos/getDetail",
+    async (id, thunkAPI) => {
         let response = await VideoService.getDetail(id);
         return response.data as GetVideoResponse;
     }
 );
 
-export const createVideo = createAsyncThunk<GetListVideoResponse,
+export const createVideo = createAsyncThunk<
+    GetListVideoResponse,
     VideoInfo,
     {
-        rejectValue: CreateVideoResponse
-    }>("videos/create", async (video, thunkAPI) => {
-        let response = await VideoService.create(video);
-        if (response.data.success) {
-            let getAllResponse = await VideoService.getAll();
-            return getAllResponse.data as GetListVideoResponse;
-        }
-        return thunkAPI.rejectWithValue(response.data as CreateVideoResponse);
+        rejectValue: CreateVideoResponse;
     }
-);
+>("videos/create", async (video, thunkAPI) => {
+    let response = await VideoService.create(video);
+    if (response.data.success) {
+        let getAllResponse = await VideoService.getAll();
+        return getAllResponse.data as GetListVideoResponse;
+    }
+    return thunkAPI.rejectWithValue(response.data as CreateVideoResponse);
+});
 
-export const editVideo = createAsyncThunk<GetListVideoResponse,
+export const editVideo = createAsyncThunk<
+    GetListVideoResponse,
     VideoInfo,
     {
-        rejectValue: EditVideoResponse
-    }>("videos/edit", async (video, thunkAPI) => {
-        let response = await VideoService.edit(video);
-        if (response.data.success) {
-            let getAllResponse = await VideoService.getAll();
-            return getAllResponse.data as GetListVideoResponse;
-        }
-        return thunkAPI.rejectWithValue(response.data as EditVideoResponse);
+        rejectValue: EditVideoResponse;
     }
-);
+>("videos/edit", async (video, thunkAPI) => {
+    let response = await VideoService.edit(video);
+    if (response.data.success) {
+        let getAllResponse = await VideoService.getAll();
+        return getAllResponse.data as GetListVideoResponse;
+    }
+    return thunkAPI.rejectWithValue(response.data as EditVideoResponse);
+});
 
 export const deleteVideo = createAsyncThunk(
     "videos/delete",
@@ -83,10 +84,10 @@ export const videoSlice = createSlice({
         },
         setEditVideoModalVisible: (state, action) => {
             state.isEditModalVisible = action.payload;
-        }
+        },
     },
-    extraReducers: (builder) => {
-        builder.addCase(getAllVideo.pending, (state) => {
+    extraReducers: builder => {
+        builder.addCase(getAllVideo.pending, state => {
             state.isLoading = true;
         });
 
@@ -96,7 +97,7 @@ export const videoSlice = createSlice({
             state.values = action.payload.data;
         });
 
-        builder.addCase(getDetailVideo.pending, (state) => {
+        builder.addCase(getDetailVideo.pending, state => {
             state.isLoading = true;
         });
 
@@ -104,7 +105,7 @@ export const videoSlice = createSlice({
             state.isLoading = false;
         });
 
-        builder.addCase(createVideo.pending, (state) => {
+        builder.addCase(createVideo.pending, state => {
             state.isLoading = true;
         });
 
@@ -122,7 +123,7 @@ export const videoSlice = createSlice({
             state.errors = action.payload?.errors || action.error;
         });
 
-        builder.addCase(editVideo.pending, (state) => {
+        builder.addCase(editVideo.pending, state => {
             state.isLoading = true;
         });
 
@@ -140,7 +141,7 @@ export const videoSlice = createSlice({
             state.errors = action.payload?.errors || action.error;
         });
 
-        builder.addCase(deleteVideo.pending, (state) => {
+        builder.addCase(deleteVideo.pending, state => {
             state.isLoading = true;
         });
 
@@ -154,15 +155,19 @@ export const videoSlice = createSlice({
             state.isLoading = false;
             state.isSuccessful = false;
         });
-    }
+    },
 });
 
-export const { setCreateVideoModalVisible, setEditVideoModalVisible } = videoSlice.actions;
+export const { setCreateVideoModalVisible, setEditVideoModalVisible } =
+    videoSlice.actions;
 
 export const selectIsLoading = (state: RootState) => state.video.isLoading;
-export const selectIsSuccessful = (state: RootState) => state.video.isSuccessful;
-export const selectIsCreateVideoModalVisible = (state: RootState) => state.video.isCreateModalVisible;
-export const selectIsEditVideoModalVisible = (state: RootState) => state.video.isEditModalVisible;
+export const selectIsSuccessful = (state: RootState) =>
+    state.video.isSuccessful;
+export const selectIsCreateVideoModalVisible = (state: RootState) =>
+    state.video.isCreateModalVisible;
+export const selectIsEditVideoModalVisible = (state: RootState) =>
+    state.video.isEditModalVisible;
 export const selectVideoList = (state: RootState) => state.video.values;
 export const selectErrors = (state: RootState) => state.video.errors;
 

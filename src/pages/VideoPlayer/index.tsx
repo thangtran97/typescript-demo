@@ -20,22 +20,22 @@ const initialOptions: videojs.PlayerOptions = {
     playbackRates: [0.5, 1, 1.5, 2],
     controlBar: {
         volumePanel: {
-            inline: false
+            inline: false,
         },
         durationDisplay: true,
         liveDisplay: true,
-        seekToLive: true
+        seekToLive: true,
     },
     plugins: {
         qualityLevel: {},
         hlsQualitySelector: {
-            vjsIconClass: "vjs-icon-cog"
+            vjsIconClass: "vjs-icon-cog",
         },
         seekButton: {
             forward: 5,
-            back: 5
-        }
-    }
+            back: 5,
+        },
+    },
 };
 
 const VideoPlayer: React.FC = () => {
@@ -49,7 +49,10 @@ const VideoPlayer: React.FC = () => {
             videojs.registerPlugin("qualityLevel", videoJsContribQualityLevels);
         }
         if (!videojs.getPlugin("hlsQualitySelector")) {
-            videojs.registerPlugin("hlsQualitySelector", videojsHlsQualitySelector);
+            videojs.registerPlugin(
+                "hlsQualitySelector",
+                videojsHlsQualitySelector
+            );
         }
         if (!videojs.getPlugin("seekButton")) {
             videojs.registerPlugin("seekButton", videosjsSeekButton);
@@ -65,12 +68,12 @@ const VideoPlayer: React.FC = () => {
                     sources: [
                         {
                             src: resultAction.payload.data.url,
-                            type: resultAction.payload.data.type
-                        }
-                    ]
+                            type: resultAction.payload.data.type,
+                        },
+                    ],
                 });
             }
-        })
+        });
 
         return () => {
             if (playerRef.current) {
@@ -78,11 +81,18 @@ const VideoPlayer: React.FC = () => {
             }
         };
     });
-    return <Page content={
-        <div style={{ marginLeft: 100, marginTop: 10 }}>
-            <video ref={videoRef} className="video-js vjs-big-play-centered vjs" />
-        </div>}
-    />;
+    return (
+        <Page
+            content={
+                <div style={{ marginLeft: 100, marginTop: 10 }}>
+                    <video
+                        ref={videoRef}
+                        className="video-js vjs-big-play-centered vjs"
+                    />
+                </div>
+            }
+        />
+    );
 };
 
 export default VideoPlayer;
